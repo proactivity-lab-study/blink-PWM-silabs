@@ -17,6 +17,7 @@ CFLAGS                  += -Wall -std=c99
 CFLAGS                  += -ffunction-sections -fdata-sections -ffreestanding -fsingle-precision-constant -Wstrict-aliasing=0
 CFLAGS                  += -DconfigUSE_TICKLESS_IDLE=0
 CFLAGS                  += -D__START=main -D__STARTUP_CLEAR_BSS
+CFLAGS                  += -specs=nosys.specs
 CFLAGS                  += -DVTOR_START_LOCATION=$(APP_START)
 LDFLAGS                 += -nostartfiles -Wl,--gc-sections -Wl,--relax -Wl,-Map=$(@:.elf=.map),--cref -Wl,--wrap=atexit
 LDLIBS                  += -lgcc -lm
@@ -50,7 +51,7 @@ PROGRAM_DEST_ADDR       ?= $(APP_START)
 # The variable needs to point at the subdirectory with the version number, set
 # it in Makefile.private or through the environment.
 
-SILABS_SDKDIR           ?= $(HOME)/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.7
+SILABS_SDKDIR           ?= $(HOME)/SimplicityStudio_v5/developer/sdks/gecko_sdk_suite/v3.1
 
 # Pull in the developer's private configuration overrides and settings
 -include Makefile.private

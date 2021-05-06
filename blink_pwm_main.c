@@ -20,6 +20,7 @@
  *
  * Copyright Thinnect Inc. 2019
  * Copyright ProLab, TTÜ. 15 April 2020
+ * 
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -54,7 +55,7 @@ static void led0_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led0 timer");
-	set_leds_pwm(get_leds_pwm() ^ m_led0_mask);
+	setLEDsPWM(getLEDsPWM()^1);
     osMutexRelease(m_led_mutex);
 }
 
@@ -62,7 +63,7 @@ static void led1_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led1 timer");
-	set_leds_pwm(get_leds_pwm() ^ m_led1_mask);
+	setLEDsPWM(getLEDsPWM()^2);
     osMutexRelease(m_led_mutex);
 }
 
@@ -70,16 +71,13 @@ static void led2_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led2 timer");
-	set_leds_pwm(get_leds_pwm() ^ m_led2_mask);
+	setLEDsPWM(getLEDsPWM()^4);
     osMutexRelease(m_led_mutex);
 }
 
 // App loop - do setup and periodically print status
 void app_loop ()
 {
-    // Switch to a thread-safe logger
-    basic_rtos_logger_setup();
-
     m_led_mutex = osMutexNew(NULL);
 
     osDelay(1000);
@@ -90,7 +88,7 @@ void app_loop ()
 
     debug1("t1 %p t2 %p t3 %p", led0_timer, led1_timer, led2_timer);
 
-	timer0_cc_init(); //Comment needed
+	timer0CCInit();
 
     osTimerStart(led0_timer, 1000);
     osTimerStart(led1_timer, 2000);
@@ -112,8 +110,8 @@ void app_loop ()
 //Use TIMER1 to regularly change PWM duty cycle and create LED fading effect
 void dimmer_loop ()
 {
-	timer1_init();
-	start_fading_leds();
+	timer1Init();
+	startFadingLEDs();
 }
 
 int main ()
@@ -141,6 +139,8 @@ int main ()
 
     if (osKernelReady == osKernelGetState())
     {
+        basic_rtos_logger_setup();
+
         // Start the kernel
         osKernelStart();
     }

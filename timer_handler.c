@@ -1,12 +1,15 @@
-/*
- * timer_handler.c
+/**
+ * @file timer_handler.c
  *
+ * @brief Init TIMER0 and TIMER1 to control LEDs with PWM.
+ * 
  * TIMER0 PWM is used to control all three LEDs
  * TIMER1 is used to trigger fading effect of LEDs
  * 
- *  Created on: 15 April 2020
- *      Author: Johannes Ehala, ProLab
- * 
+ * @author Johannes Ehala, ProLab.
+ * @license MIT
+ *
+ * Copyright ProLab, TTÜ. 15 April 2020
  */
 
 #include "em_cmu.h"
@@ -14,205 +17,214 @@
 
 #include "timer_handler.h"
 
-#include "loglevels.h"
-#define __MODUUL__ "adchandler"
-#define __LOG_LEVEL__ (LOG_LEVEL_adchandler & BASE_LOG_LEVEL)
-#include "log.h"
-
-volatile static uint8_t led_state = 0;
-uint32_t led0_cnt, led1_cnt, led2_cnt, led0_sd, led2_sd;
-uint8_t led0_toggle, led1_toggle, led2_toggle;
-
-enum 
+typedef enum 
 {
 	FIRE_UP = 0,
 	COOL_DOWN
-};
+}led_state_transition_t;
 
-/****************************************************************************
- * @brief Init TIMER1 to regulate PWM duty cycle. 
- *****************************************************************************/
-void timer1Init(void)
+void change_pwm_dutycycle ();
+
+volatile static uint8_t m_led_state = 0;
+static uint32_t m_led0_cnt, m_led1_cnt, m_led2_cnt, m_led0_sd, m_led2_sd;
+static led_state_transition_t m_led0_toggle, m_led1_toggle, m_led2_toggle;
+
+
+/**
+ * @brief Init TIMER1 to regulate PWM dutycycle. 
+ */
+void timer1_init(void)
 {
-	/* Enable clocks */
+	// Enable clocks.
     CMU_ClockEnable(cmuClock_TIMER1, true);
 
-	/* Set TIMER top value */
+	// Set TIMER top value.
 	TIMER_TopSet(TIMER1, TIMER1_TOP_VAL);
 
-	/* TIMER general init */
+	// TIMER general init
 	TIMER_Init_TypeDef timerInit = TIMER_INIT_DEFAULT;
 	timerInit.prescale = timerPrescale1024;
-	timerInit.enable = false; //don't start timer after init
+	timerInit.enable = false; // Don't start timer after init.
 
-	/* LED0 and LED2 duty cycle count-down is slowed down; init counters */
-	led0_sd = led2_sd = 1;
+	// LED0 and LED2 duty cycle count-down is slowed down, init counters.
+	m_led0_sd = m_led2_sd = 1;
 
 	TIMER_Init(TIMER1, &timerInit);
 }
 
-/****************************************************************************
+/**
  * @brief Init TIMER0 for PWM usage on three CC channels. Start TIMER0.
- *****************************************************************************/
-void timer0CCInit(void)
+ */
+void timer0_cc_init(void)
 {
-	/* Enable clocks */
+	// Enable clocks.
     CMU_ClockEnable(cmuClock_TIMER0, true);
 
-	/* Init CC for PWM on GPIO pins */
+	// Init CC for PWM on GPIO pins.
 	TIMER_InitCC_TypeDef ccInit = TIMER_INITCC_DEFAULT;
 	ccInit.mode = timerCCModePWM;
 	ccInit.cmoa = timerOutputActionToggle;
-
-	/* Initilize a CC channels for each LED */
+	
+	// Initilize a CC channels for each LED.
 	TIMER_InitCC(TIMER0, LED0_CC_CHANNEL, &ccInit);
 	TIMER_InitCC(TIMER0, LED1_CC_CHANNEL, &ccInit);
 	TIMER_InitCC(TIMER0, LED2_CC_CHANNEL, &ccInit);
 
-	/* Enable GPIO toggling by TIMER and set location of pins to be toggled */
+	// Enable GPIO toggling by TIMER and set location of pins to be toggled.
 	TIMER0->ROUTEPEN = (TIMER_ROUTEPEN_CC0PEN | TIMER_ROUTEPEN_CC1PEN | TIMER_ROUTEPEN_CC2PEN);
 	TIMER0->ROUTELOC0 = (LED0_LOC | LED1_LOC | LED2_LOC);
 
-	/* Set TIMER0 top value, same for all CC channels */
+	// Set same TIMER0 top value for all CC channels.
 	TIMER_TopSet(TIMER0, TIMER0_TOP_VAL);
 
-	/* Set the PWM duty cycle, init all LEDs to zero */
+	// Set the PWM duty cycle, init all LEDs to zero.
 	TIMER_CompareBufSet(TIMER0, LED0_CC_CHANNEL, 0);
 	TIMER_CompareBufSet(TIMER0, LED1_CC_CHANNEL, 0);
 	TIMER_CompareBufSet(TIMER0, LED2_CC_CHANNEL, 0);
-	led0_cnt = led1_cnt = led2_cnt = 0;
-	led0_toggle = led1_toggle = led2_toggle = COOL_DOWN;	
+	m_led0_cnt = m_led1_cnt = m_led2_cnt = 0;
+	m_led0_toggle = m_led1_toggle = m_led2_toggle = COOL_DOWN;	
 
-	/* TIMER general init */
+	// TIMER general init
 	TIMER_Init_TypeDef timerInit = TIMER_INIT_DEFAULT;
 	timerInit.prescale = timerPrescale256;
-	timerInit.enable = true; //start timer after init
+	timerInit.enable = true; // Start timer after init.
 
 	TIMER_Init(TIMER0, &timerInit);
 }
 
-/****************************************************************************
- * @brief Start TIMER1 and PWM duty cycle manipulation.
- *****************************************************************************/
-void startFadingLEDs()
+/**
+ * @brief Start TIMER1 and manipulate PWM duty cycle.
+ * 
+ * Creates LED fading/gradual brightening effect. Each time TIMER1 fires 
+ * increase or decrease each LED duty cycle by one step.
+ */
+void start_fading_leds()
 {
 	TIMER_IntClear(TIMER1, TIMER_IFC_OF);
 	TIMER_IntEnable(TIMER1, TIMER_IntGet(TIMER1) | TIMER_IEN_OF);
 	TIMER_Enable(TIMER1, true);
 
-	//TODO: Perhaps replace with an interrupt handler
+	//TODO: Perhaps replace with an interrupt handler?
 	for(;;)
 	{
-		if(TIMER1->IF & _TIMER_IF_OF_MASK)//overflow has occurred
+		if(_TIMER_IF_OF_MASK & TIMER1->IF) // Overflow has occurred.
 		{
-			changePWM_dutyCycle();
+			change_pwm_dutycycle();
 			TIMER_IntClear(TIMER1, TIMER_IFC_OF);
 		}
 	}
 }
 
-/****************************************************************************
- * @brief Sets the state of LEDs. State change triggers gradual fading/- 
- * 		brightening of LED.
- *****************************************************************************/
-void setLEDsPWM(uint8_t val)
+/**
+ * @brief Sets the state of LEDs. 
+ * 
+ * State change triggers gradual fading-brightening of LED.
+ * 
+ * @param val State of each LED as a bitmask. 
+ */
+void set_leds_pwm(uint8_t val)
 {
-	if(val&1)led0_toggle = FIRE_UP;
-	else led0_toggle = COOL_DOWN;
+	if(val & m_led0_mask)m_led0_toggle = FIRE_UP;
+	else m_led0_toggle = COOL_DOWN;
 
-	if(val&2)led1_toggle = FIRE_UP;
-	else led1_toggle = COOL_DOWN;
+	if(val & m_led1_mask)m_led1_toggle = FIRE_UP;
+	else m_led1_toggle = COOL_DOWN;
 
-	if(val&4)led2_toggle = FIRE_UP;
-	else led2_toggle = COOL_DOWN;
+	if(val & m_led2_mask)m_led2_toggle = FIRE_UP;
+	else m_led2_toggle = COOL_DOWN;
 
-	led_state = val;
+	m_led_state = val;
 }
 
-/****************************************************************************
- * @brief Get current LED state. LEDs in the process of change are reported
- * 		as already changed state (ie if LED is fading from ON to OFF, it is 
- * 		reported as OFF already).
- *****************************************************************************/
-uint8_t getLEDsPWM()
+/**
+ * @brief Get current LED state. 
+ * 
+ * LEDs in the process of change are reported as already changed state (ie if LED
+ * is fading from ON to OFF, it is reported as OFF already).
+ * 
+ * @return Each bit represents LED state, e.g. 00000010 means LED 1 is ON, while
+ *         other LEDs are OFF.
+ */
+uint8_t get_leds_pwm ()
 {
-	return led_state;
+	return m_led_state;
 }
 
-/****************************************************************************
- * @brief Gradually fade/brighten LEDs. Also keep all LEDs at similar 
- * 		brightness. This means dimming LED0 (red) and LED2 (blue) to LED1 
- * 		(green) level.
- *****************************************************************************/
-void changePWM_dutyCycle()
+/**
+ * @brief Increase or decrease each LED dutycycle by one step. 
+ * 
+ * Also keep all LEDs at similar brightness. This means dimming LED0 (red) and LED2
+ * (blue) to LED1 (green) level.
+ */
+void change_pwm_dutycycle ()
 {
-	if(led0_sd == LED0_POWER_DIV)
+	if(LED0_POWER_DIV == m_led0_sd)
 	{
-		/* For LED 0 */
-		if(led0_toggle == FIRE_UP)
+		// For LED 0
+		if(FIRE_UP == m_led0_toggle)
 		{
-			if(led0_cnt <= LED0_MAX_DC)
+			if(LED0_MAX_DC >= m_led0_cnt)
 			{
-				led0_cnt++;
-				TIMER_CompareBufSet(TIMER0, LED0_CC_CHANNEL, led0_cnt);
+				m_led0_cnt++;
+				TIMER_CompareBufSet(TIMER0, LED0_CC_CHANNEL, m_led0_cnt);
 			}
 		}
-		else if(led0_toggle == COOL_DOWN)
+		else if(COOL_DOWN == m_led0_toggle)
 		{
-			if(led0_cnt > 0)
+			if(0 < m_led0_cnt)
 			{
-				led0_cnt--;
-				TIMER_CompareBufSet(TIMER0, LED0_CC_CHANNEL, led0_cnt);
+				m_led0_cnt--;
+				TIMER_CompareBufSet(TIMER0, LED0_CC_CHANNEL, m_led0_cnt);
 			}
 		}
 		else ;
 	}
 
-	/* For LED 1 */
-	if(led1_toggle == FIRE_UP)
+	// For LED 1
+	if(FIRE_UP == m_led1_toggle)
 	{
-		if(led1_cnt <= LED1_MAX_DC)
+		if(LED1_MAX_DC >= m_led1_cnt)
 		{
-			led1_cnt++;
-			TIMER_CompareBufSet(TIMER0, LED1_CC_CHANNEL, led1_cnt);
+			m_led1_cnt++;
+			TIMER_CompareBufSet(TIMER0, LED1_CC_CHANNEL, m_led1_cnt);
 		}
 	}
-	else if(led1_toggle == COOL_DOWN)
+	else if(COOL_DOWN == m_led1_toggle)
 	{
-		if(led1_cnt > 0)
+		if(0 < m_led1_cnt)
 		{
-			led1_cnt--;
-			TIMER_CompareBufSet(TIMER0, LED1_CC_CHANNEL, led1_cnt);
+			m_led1_cnt--;
+			TIMER_CompareBufSet(TIMER0, LED1_CC_CHANNEL, m_led1_cnt);
 		}
 	}
 	else ;
 
-	if(led2_sd == LED2_POWER_DIV)
+	if(LED2_POWER_DIV == m_led2_sd)
 	{
-		/* For LED 2 */
-		if(led2_toggle == FIRE_UP)
+		// For LED 2
+		if(FIRE_UP == m_led2_toggle)
 		{
-			if(led2_cnt <= LED2_MAX_DC)
+			if(LED2_MAX_DC >= m_led2_cnt)
 			{
-				led2_cnt++;
-				TIMER_CompareBufSet(TIMER0, LED2_CC_CHANNEL, led2_cnt);
+				m_led2_cnt++;
+				TIMER_CompareBufSet(TIMER0, LED2_CC_CHANNEL, m_led2_cnt);
 			}
 		}
-		else if(led2_toggle == COOL_DOWN)
+		else if(COOL_DOWN == m_led2_toggle)
 		{
-			if(led2_cnt > 0)
+			if(0 < m_led2_cnt)
 			{
-				led2_cnt--;
-				TIMER_CompareBufSet(TIMER0, LED2_CC_CHANNEL, led2_cnt);
+				m_led2_cnt--;
+				TIMER_CompareBufSet(TIMER0, LED2_CC_CHANNEL, m_led2_cnt);
 			}
 		}
 		else ;
 	}
 
-	/* LED0 and LED2 slow down - dims LED0 and LED2 to LED1 level */
-	if(led0_sd >= LED0_POWER_DIV)led0_sd = 1;
-	else led0_sd++;
+	// LED0 and LED2 slow down - dims LED0 and LED2 to LED1 level
+	if(LED0_POWER_DIV <= m_led0_sd)m_led0_sd = 1;
+	else m_led0_sd++;
 
-	if(led2_sd >= LED2_POWER_DIV)led2_sd = 1;
-	else led2_sd++;
+	if(LED2_POWER_DIV <= m_led2_sd)m_led2_sd = 1;
+	else m_led2_sd++;
 }

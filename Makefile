@@ -78,8 +78,8 @@ NODE_PLATFORM_DIR       := $(ZOO)/thinnect.node-platform
 
 # ______________ Build components - sources and includes _______________________
 
-SOURCES += blink_main.c \
-			timer_handler.c
+SOURCES += blink_pwm_main.c \
+            timer_handler.c
 
 # FreeRTOS
 FREERTOS_DIR ?= $(ZOO)/FreeRTOS-Kernel

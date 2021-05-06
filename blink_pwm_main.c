@@ -27,6 +27,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "retargetserial.h"
+
 #include "cmsis_os2.h"
 
 #include "platform.h"

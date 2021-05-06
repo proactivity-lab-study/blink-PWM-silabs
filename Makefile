@@ -97,6 +97,8 @@ SOURCES += $(FREERTOS_PORT_SRC) $(FREERTOS_SRC)
 # CMSIS_CONFIG_DIR is used to add default CMSIS and FreeRTOS configs to INCLUDES
 CMSIS_CONFIG_DIR ?= $(ZOO)/thinnect.cmsis-freertos/$(MCU_ARCH)/config
 
+INCLUDES += -I$(ZOO)/thinnect.cmsis-ext
+
 # Silabs EMLIB, RAIL, radio
 INCLUDES += \
     -I$(SILABS_SDKDIR)/hardware/kit/common/drivers \
@@ -120,6 +122,7 @@ SOURCES += \
 # logging
 CFLAGS  += -DLOGGER_FWRITE
 SOURCES += $(NODE_PLATFORM_DIR)/silabs/logger_fwrite.c
+SOURCES += $(NODE_PLATFORM_DIR)/silabs/logger_fwrite_basic.c
 SOURCES += $(ZOO)/thinnect.lll/logging/loggers_ext.c
 INCLUDES += -I$(ZOO)/thinnect.lll/logging
 
@@ -137,7 +140,10 @@ SOURCES += $(ZOO)/lammertb.libcrc/src/crcccitt.c
 
 # platform stuff - watchdog, io etc...
 INCLUDES += -I$(NODE_PLATFORM_DIR)/include
-
+INCLUDES += -I$(NODE_PLATFORM_DIR)/include/silabs
+INCLUDES += -I$(NODE_PLATFORM_DIR)/widgets
+SOURCES += $(NODE_PLATFORM_DIR)/common/platform_mutex.c
+SOURCES += $(NODE_PLATFORM_DIR)/widgets/basic_rtos_logger_setup.c
 # ------------------------------------------------------------------------------
 
 # Pull in the grunt work

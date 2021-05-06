@@ -55,7 +55,7 @@ static void led0_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led0 timer");
-	setLEDsPWM(getLEDsPWM()^1);
+    set_leds_pwm(sget_leds_pwm() ^ m_led0_mask);
     osMutexRelease(m_led_mutex);
 }
 
@@ -63,7 +63,7 @@ static void led1_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led1 timer");
-	setLEDsPWM(getLEDsPWM()^2);
+    set_leds_pwm(get_leds_pwm() ^ m_led1_mask);
     osMutexRelease(m_led_mutex);
 }
 
@@ -71,7 +71,7 @@ static void led2_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led2 timer");
-	setLEDsPWM(getLEDsPWM()^4);
+    set_leds_pwm(get_leds_pwm() ^ m_led2_mask);
     osMutexRelease(m_led_mutex);
 }
 
@@ -88,7 +88,7 @@ void app_loop ()
 
     debug1("t1 %p t2 %p t3 %p", led0_timer, led1_timer, led2_timer);
 
-	timer0CCInit();
+    timer0_cc_init();
 
     osTimerStart(led0_timer, 1000);
     osTimerStart(led1_timer, 2000);
@@ -110,8 +110,8 @@ void app_loop ()
 //Use TIMER1 to regularly change PWM duty cycle and create LED fading effect
 void dimmer_loop ()
 {
-	timer1Init();
-	startFadingLEDs();
+    timer1_init();
+    start_fading_leds();
 }
 
 int main ()

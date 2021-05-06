@@ -1,4 +1,4 @@
-//*
+/**
  * @file timer_handler.h
  *
  * @author Johannes Ehala, ProLab.

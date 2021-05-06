@@ -97,8 +97,10 @@ void timer0_cc_init(void)
  * 
  * Creates LED fading/gradual brightening effect. Each time TIMER1 fires 
  * increase or decrease each LED duty cycle by one step.
+ * 
+ * @warning There is an infinte loop in this function.
  */
-void start_fading_leds()
+void start_fading_leds_loop()
 {
 	TIMER_IntClear(TIMER1, TIMER_IFC_OF);
 	TIMER_IntEnable(TIMER1, TIMER_IntGet(TIMER1) | TIMER_IEN_OF);

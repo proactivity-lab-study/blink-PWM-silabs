@@ -112,7 +112,7 @@ void app_loop ()
 void dimmer_loop ()
 {
     timer1_init();
-    start_fading_leds();
+    start_fading_leds_loop();
 }
 
 int logger_fwrite_boot (const char *ptr, int len)

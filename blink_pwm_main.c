@@ -111,7 +111,7 @@ void app_loop ()
 void dimmer_loop ()
 {
     timer1_init();
-    start_fading_leds();
+    start_fading_leds_loop();
 }
 
 int main ()

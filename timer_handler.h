@@ -40,7 +40,7 @@
 // Public functions
 void timer1_init();
 void timer0_cc_init();
-void start_fading_leds();
+void start_fading_leds_loop();
 uint8_t get_leds_pwm();
 void set_leds_pwm(uint8_t val);
 

@@ -27,8 +27,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "retargetserial.h"
-
 #include "cmsis_os2.h"
 
 #include "platform.h"
@@ -36,7 +34,8 @@
 #include "SignatureArea.h"
 #include "DeviceSignature.h"
 
-#include "basic_rtos_logger_setup.h"
+#include "loggers_ext.h"
+#include "logger_fwrite.h"
 
 #include "timer_handler.h"
 
@@ -114,6 +113,13 @@ void dimmer_loop ()
     start_fading_leds();
 }
 
+int logger_fwrite_boot (const char *ptr, int len)
+{
+    fwrite(ptr, len, 1, stdout);
+    fflush(stdout);
+    return len;
+}
+
 int main ()
 {
     PLATFORM_Init();
@@ -123,7 +129,8 @@ int main ()
     PLATFORM_ButtonPinInit();
 
     // Configure debug output
-    basic_noos_logger_setup();
+    RETARGET_SerialInit();
+    log_init(BASE_LOG_LEVEL, &logger_fwrite_boot, NULL);
 
     info1("Blink "VERSION_STR" (%d.%d.%d)", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 
@@ -139,7 +146,9 @@ int main ()
 
     if (osKernelReady == osKernelGetState())
     {
-        basic_rtos_logger_setup();
+        // Switch to a thread-safe logger
+        logger_fwrite_init();
+        log_init(BASE_LOG_LEVEL, &logger_fwrite, NULL);
 
         // Start the kernel
         osKernelStart();

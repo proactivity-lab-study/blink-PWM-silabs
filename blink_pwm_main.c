@@ -55,7 +55,7 @@ static void led0_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led0 timer");
-    set_leds_pwm(get_leds_pwm() ^ m_led0_mask);
+    set_leds_pwm(get_leds_pwm() ^ BLINK_PWM_LED0_MASK);
     osMutexRelease(m_led_mutex);
 }
 
@@ -63,7 +63,7 @@ static void led1_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led1 timer");
-    set_leds_pwm(get_leds_pwm() ^ m_led1_mask);
+    set_leds_pwm(get_leds_pwm() ^ BLINK_PWM_LED1_MASK);
     osMutexRelease(m_led_mutex);
 }
 
@@ -71,7 +71,7 @@ static void led2_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led2 timer");
-    set_leds_pwm(get_leds_pwm() ^ m_led2_mask);
+    set_leds_pwm(get_leds_pwm() ^ BLINK_PWM_LED2_MASK);
     osMutexRelease(m_led_mutex);
 }
 

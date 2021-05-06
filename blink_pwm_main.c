@@ -55,7 +55,7 @@ static void led0_timer_cb(void* argument)
 {
     osMutexAcquire(m_led_mutex, osWaitForever);
     debug1("led0 timer");
-    set_leds_pwm(sget_leds_pwm() ^ m_led0_mask);
+    set_leds_pwm(get_leds_pwm() ^ m_led0_mask);
     osMutexRelease(m_led_mutex);
 }
 
@@ -82,9 +82,9 @@ void app_loop ()
 
     osDelay(1000);
 
-    static osTimerId_t led0_timer = osTimerNew(&led0_timer_cb, osTimerPeriodic, NULL, NULL);
-    static osTimerId_t led1_timer = osTimerNew(&led1_timer_cb, osTimerPeriodic, NULL, NULL);
-    static osTimerId_t led2_timer = osTimerNew(&led2_timer_cb, osTimerPeriodic, NULL, NULL);
+    osTimerId_t led0_timer = osTimerNew(&led0_timer_cb, osTimerPeriodic, NULL, NULL);
+    osTimerId_t led1_timer = osTimerNew(&led1_timer_cb, osTimerPeriodic, NULL, NULL);
+    osTimerId_t led2_timer = osTimerNew(&led2_timer_cb, osTimerPeriodic, NULL, NULL);
 
     debug1("t1 %p t2 %p t3 %p", led0_timer, led1_timer, led2_timer);
 

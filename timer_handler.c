@@ -124,13 +124,13 @@ void start_fading_leds()
  */
 void set_leds_pwm(uint8_t val)
 {
-	if(val & m_led0_mask)m_led0_toggle = FIRE_UP;
+	if(val & BLINK_PWM_LED0_MASK)m_led0_toggle = FIRE_UP;
 	else m_led0_toggle = COOL_DOWN;
 
-	if(val & m_led1_mask)m_led1_toggle = FIRE_UP;
+	if(val & BLINK_PWM_LED1_MASK)m_led1_toggle = FIRE_UP;
 	else m_led1_toggle = COOL_DOWN;
 
-	if(val & m_led2_mask)m_led2_toggle = FIRE_UP;
+	if(val & BLINK_PWM_LED2_MASK)m_led2_toggle = FIRE_UP;
 	else m_led2_toggle = COOL_DOWN;
 
 	m_led_state = val;

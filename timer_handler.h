@@ -1,4 +1,4 @@
-//*
+/**
  * @file timer_handler.h
  *
  * @author Johannes Ehala, ProLab.
@@ -33,9 +33,9 @@
 
 #define TIMER1_TOP_VAL 78
 
-const uint8_t m_led0_mask = 1; //00000001
-const uint8_t m_led1_mask = 2; //00000010
-const uint8_t m_led2_mask = 4; //00000100
+#define BLINK_PWM_LED0_MASK 1U //00000001
+#define BLINK_PWM_LED1_MASK 2U //00000010
+#define BLINK_PWM_LED2_MASK 4U //00000100
 
 // Public functions
 void timer1_init();

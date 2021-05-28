@@ -97,7 +97,7 @@ void app_loop ()
     for (;;)
     {
         osMutexAcquire(m_led_mutex, osWaitForever);
-        info1("leds %u", (unsigned int)PLATFORM_LedsGet());
+        info1("leds %u", get_leds_pwm());
         osMutexRelease(m_led_mutex);
         osDelay(1000);
         if(PLATFORM_ButtonGet())
@@ -125,7 +125,7 @@ int main ()
     // Configure debug output
     basic_noos_logger_setup();
 
-    info1("Blink "VERSION_STR" (%d.%d.%d)", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+    info1("Blink-PWM "VERSION_STR" (%d.%d.%d)", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 
     // Initialize OS kernel
     osKernelInitialize();

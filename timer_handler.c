@@ -23,7 +23,7 @@ typedef enum
 	COOL_DOWN
 }led_state_transition_t;
 
-void change_pwm_dutycycle ();
+static void change_pwm_dutycycle ();
 
 volatile static uint8_t m_led_state = 0;
 static uint32_t m_led0_cnt, m_led1_cnt, m_led2_cnt, m_led0_sd, m_led2_sd;
@@ -158,7 +158,7 @@ uint8_t get_leds_pwm ()
  * Also keep all LEDs at similar brightness. This means dimming LED0 (red) and LED2
  * (blue) to LED1 (green) level.
  */
-void change_pwm_dutycycle ()
+static void change_pwm_dutycycle ()
 {
 	if(LED0_POWER_DIV == m_led0_sd)
 	{

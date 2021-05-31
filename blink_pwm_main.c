@@ -80,6 +80,8 @@ void app_loop ()
 {
     m_led_mutex = osMutexNew(NULL);
 
+    basic_rtos_logger_setup();
+    
     osDelay(1000);
 
     osTimerId_t led0_timer = osTimerNew(&led0_timer_cb, osTimerPeriodic, NULL, NULL);
@@ -139,8 +141,6 @@ int main ()
 
     if (osKernelReady == osKernelGetState())
     {
-        basic_rtos_logger_setup();
-
         // Start the kernel
         osKernelStart();
     }
